@@ -34,7 +34,7 @@ class MemoryMCPServer:
             """List available memory tools."""
             return [
                 Tool(
-                    name="save_memory",
+                    name="remember",
                     description="Save a memory to long-term storage. Use this to remember important things, experiences, conversations, or learnings.",
                     inputSchema={
                         "type": "object",
@@ -228,7 +228,7 @@ class MemoryMCPServer:
 
             try:
                 match name:
-                    case "save_memory":
+                    case "remember":
                         content = arguments.get("content", "")
                         if not content:
                             return [TextContent(type="text", text="Error: content is required")]
