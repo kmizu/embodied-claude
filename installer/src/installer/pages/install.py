@@ -42,8 +42,8 @@ class InstallationWorker(QThread):
             self.progress.emit("\n📝 Creating MCP configuration...")
             mcp_config = self._create_mcp_config(repo_path)
 
-            # Write to Claude Code settings
-            settings_path = Path.home() / ".claude" / "settings.json"
+            # Write to Claude Code configuration
+            settings_path = Path.home() / ".claude.json"
             self.progress.emit(f"💾 Writing to: {settings_path}")
 
             self._update_claude_settings(settings_path, mcp_config)
@@ -138,8 +138,8 @@ class InstallationWorker(QThread):
         return config
 
     def _update_claude_settings(self, settings_path, mcp_config):
-        """Update Claude Code settings.json"""
-        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        """Update Claude Code .claude.json configuration"""
+        # No need to create parent directory for ~/.claude.json
 
         # Load existing settings
         existing = {}
