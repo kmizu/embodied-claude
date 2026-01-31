@@ -105,37 +105,37 @@ cp .env.example .env
 
 1. 「ホーム」タブから登録したカメラを選択
 
-![65047](https://github.com/user-attachments/assets/45902385-e219-4ca4-aefa-781b1e7b4811)
+<img width="50%" height="50" src="https://github.com/user-attachments/assets/45902385-e219-4ca4-aefa-781b1e7b4811)">
 
 2. 右上の歯車アイコンを選択
 
-![65048](https://github.com/user-attachments/assets/b15b0eb7-7322-46d2-81c1-a7f938e2a2c1)
+<img width="50%" height="50%" src="https://github.com/user-attachments/assets/b15b0eb7-7322-46d2-81c1-a7f938e2a2c1">
 
 3. 「デバイス設定」画面をスクロールして「高度な設定」を選択
 
-![65041](https://github.com/user-attachments/assets/72227f9b-9a58-4264-a241-684ebe1f7b47)
+<img width="50%" height="50%" src="https://github.com/user-attachments/assets/72227f9b-9a58-4264-a241-684ebe1f7b47">
 
 4. 「カメラのアカウント」がオフになっているのでオフ→オンへ
 
-<img width="1080" height="2400" alt="Screenshot_20260131-162424" src="https://github.com/user-attachments/assets/82275059-fba7-4e3b-b5f1-8c068fe79f8a" />
+<img width="50%" height="50%" src="https://github.com/user-attachments/assets/82275059-fba7-4e3b-b5f1-8c068fe79f8a">
 
-![camera-account-on](https://github.com/user-attachments/assets/43cc17cb-76c9-4883-ae9f-73a9e46dd133)
+<img width="50%" height="50%" src="https://github.com/user-attachments/assets/43cc17cb-76c9-4883-ae9f-73a9e46dd133">
 
 5. 「アカウント情報」を選択してユーザー名とパスワード（TP-Linkのものとは異なるので好きに設定してOK）を設定する
 
 既にカメラアカウント作成済みなので若干違う画面になっていますが、だいたい似た画面になるはずです。ここで設定したユーザー名とパスワードを先述のファイルに入力します。
 
-![account-make](https://github.com/user-attachments/assets/d3f57694-ca29-4681-98d5-20957bfad8a4)
+<img width="50%" height="50%" src="https://github.com/user-attachments/assets/d3f57694-ca29-4681-98d5-20957bfad8a4">
 
 6. 3.の「デバイス設定」画面に戻って「端末情報」を選択
 
-![t-link-config1](https://github.com/user-attachments/assets/dc23e345-2bfb-4ca2-a4ec-b5b0f43ec170)
+<img width="50%" height="50%" src="https://github.com/user-attachments/assets/dc23e345-2bfb-4ca2-a4ec-b5b0f43ec170">
 
 7. 「端末情報」のなかのIPアドレスを先述の画面のファイルに入力
  
-<img width="1080" height="2400" alt="ip-address" src="https://github.com/user-attachments/assets/062cb89e-6cfd-4c52-873a-d9fc7cba5fa0" />
+<img width="50%" height="50%" src="https://github.com/user-attachments/assets/062cb89e-6cfd-4c52-873a-d9fc7cba5fa0">
 
-8. （ここからは念のためなので不要かもしれません。使っているpytapoが必要とする可能性があります）
+8. （ここからは念のためなので不要かもしれません。依存ライブラリのpytapoが必要とする可能性があります）
 
 8-1. 「私」タブから「音声アシスタント」を選択します（このタブはスクショできなかったので文章での説明になります）。
 8-2. 下部にある「サードパーティ連携」をオフからオンにしておきます
