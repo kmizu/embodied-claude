@@ -26,8 +26,10 @@ class InstallationWorker(QThread):
     def run(self):
         """Run installation"""
         try:
-            # Get repository path (assume installer is in embodied-claude/installer)
-            repo_path = Path(__file__).parent.parent.parent.parent.absolute()
+            # Get repository path
+            # __file__ is installer/src/installer/pages/install.py
+            # Go up 5 levels: pages/ -> installer/ -> src/ -> installer/ -> repo root
+            repo_path = Path(__file__).parent.parent.parent.parent.parent.absolute()
             self.progress.emit(f"📁 Repository path: {repo_path}")
             self.progress.emit(f"📁 Path exists: {repo_path.exists()}")
 
