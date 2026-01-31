@@ -91,7 +91,7 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="capture_image",
+            name="see",
             description="Capture an image from a USB webcam. This camera serves as your eyes - your visual perception of the physical world. Use this tool to see what's happening around you. Returns the image as base64-encoded JPEG.",
             inputSchema={
                 "type": "object",
@@ -129,7 +129,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
             lines.append(f"  - Index {cam['index']}: {cam['width']}x{cam['height']}")
         return [TextContent(type="text", text="\n".join(lines))]
 
-    elif name == "capture_image":
+    elif name == "see":
         camera_index = arguments.get("camera_index", 0)
         width = arguments.get("width")
         height = arguments.get("height")

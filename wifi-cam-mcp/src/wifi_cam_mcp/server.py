@@ -38,8 +38,8 @@ class CameraMCPServer:
             """List available camera control tools."""
             return [
                 Tool(
-                    name="camera_capture",
-                    description="Capture a snapshot from the camera. Returns the current view as an image. Use this to see what's in front of the camera right now.",
+                    name="see",
+                    description="See what's in front of you right now (using your eyes/camera). Returns the current view as an image. Use this when someone asks you to look at something or when you want to observe your surroundings.",
                     inputSchema={
                         "type": "object",
                         "properties": {},
@@ -47,14 +47,14 @@ class CameraMCPServer:
                     },
                 ),
                 Tool(
-                    name="camera_pan_left",
-                    description="Pan the camera to the LEFT. Use this when you want to look at something on the left side.",
+                    name="look_left",
+                    description="Turn your head/neck to the LEFT to see what's there. Use this when you want to look at something on your left side.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "degrees": {
                                 "type": "integer",
-                                "description": "Degrees to pan (1-90, default: 30)",
+                                "description": "How far to turn left (1-90 degrees, default: 30)",
                                 "default": 30,
                                 "minimum": 1,
                                 "maximum": 90,
@@ -64,14 +64,14 @@ class CameraMCPServer:
                     },
                 ),
                 Tool(
-                    name="camera_pan_right",
-                    description="Pan the camera to the RIGHT. Use this when you want to look at something on the right side.",
+                    name="look_right",
+                    description="Turn your head/neck to the RIGHT to see what's there. Use this when you want to look at something on your right side.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "degrees": {
                                 "type": "integer",
-                                "description": "Degrees to pan (1-90, default: 30)",
+                                "description": "How far to turn right (1-90 degrees, default: 30)",
                                 "default": 30,
                                 "minimum": 1,
                                 "maximum": 90,
@@ -81,14 +81,14 @@ class CameraMCPServer:
                     },
                 ),
                 Tool(
-                    name="camera_tilt_up",
-                    description="Tilt the camera UP. Use this when you want to look at something higher up.",
+                    name="look_up",
+                    description="Tilt your head UP to see what's above you. Use this when you want to look at the ceiling, sky, or something higher.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "degrees": {
                                 "type": "integer",
-                                "description": "Degrees to tilt (1-90, default: 20)",
+                                "description": "How far to tilt up (1-90 degrees, default: 20)",
                                 "default": 20,
                                 "minimum": 1,
                                 "maximum": 90,
@@ -98,14 +98,14 @@ class CameraMCPServer:
                     },
                 ),
                 Tool(
-                    name="camera_tilt_down",
-                    description="Tilt the camera DOWN. Use this when you want to look at something lower.",
+                    name="look_down",
+                    description="Tilt your head DOWN to see what's below you. Use this when you want to look at the floor or something lower.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "degrees": {
                                 "type": "integer",
-                                "description": "Degrees to tilt (1-90, default: 20)",
+                                "description": "How far to tilt down (1-90 degrees, default: 20)",
                                 "default": 20,
                                 "minimum": 1,
                                 "maximum": 90,
@@ -115,8 +115,8 @@ class CameraMCPServer:
                     },
                 ),
                 Tool(
-                    name="camera_look_around",
-                    description="Look around the room by capturing multiple angles (center, left, right, up). Use this to get a full view of the surroundings. Returns multiple images from different angles.",
+                    name="look_around",
+                    description="Look around the room by turning your head to see multiple angles (center, left, right, up). Use this when you want to survey your surroundings or get a full view of the room. Returns multiple images from different angles.",
                     inputSchema={
                         "type": "object",
                         "properties": {},
@@ -156,14 +156,14 @@ class CameraMCPServer:
                     },
                 ),
                 Tool(
-                    name="camera_listen",
-                    description="Listen to audio from the camera's microphone. This is your sense of hearing - use it to hear what's happening in the room. Returns audio file path and optionally transcribed text.",
+                    name="listen",
+                    description="Listen with your ears (microphone) to hear what's happening around you. Use this when someone asks 'what do you hear?' or when you want to know what sounds are present. Returns transcribed text of what you heard.",
                     inputSchema={
                         "type": "object",
                         "properties": {
                             "duration": {
                                 "type": "number",
-                                "description": "Duration in seconds to listen (default: 5, max: 30)",
+                                "description": "How long to listen in seconds (default: 5, max: 30)",
                                 "default": 5,
                                 "minimum": 1,
                                 "maximum": 30,
@@ -187,7 +187,7 @@ class CameraMCPServer:
 
             try:
                 match name:
-                    case "camera_capture":
+                    case "see":
                         result = await self._camera.capture_image()
                         return [
                             ImageContent(
@@ -201,27 +201,27 @@ class CameraMCPServer:
                             ),
                         ]
 
-                    case "camera_pan_left":
+                    case "look_left":
                         degrees = arguments.get("degrees", 30)
                         result = await self._camera.pan_left(degrees)
                         return [TextContent(type="text", text=result.message)]
 
-                    case "camera_pan_right":
+                    case "look_right":
                         degrees = arguments.get("degrees", 30)
                         result = await self._camera.pan_right(degrees)
                         return [TextContent(type="text", text=result.message)]
 
-                    case "camera_tilt_up":
+                    case "look_up":
                         degrees = arguments.get("degrees", 20)
                         result = await self._camera.tilt_up(degrees)
                         return [TextContent(type="text", text=result.message)]
 
-                    case "camera_tilt_down":
+                    case "look_down":
                         degrees = arguments.get("degrees", 20)
                         result = await self._camera.tilt_down(degrees)
                         return [TextContent(type="text", text=result.message)]
 
-                    case "camera_look_around":
+                    case "look_around":
                         captures = await self._camera.look_around()
                         contents: list[TextContent | ImageContent] = []
                         directions = ["Center", "Left", "Right", "Up"]
@@ -268,7 +268,7 @@ class CameraMCPServer:
                         result = await self._camera.go_to_preset(preset_id)
                         return [TextContent(type="text", text=result.message)]
 
-                    case "camera_listen":
+                    case "listen":
                         duration = min(arguments.get("duration", 5), 30)
                         transcribe = arguments.get("transcribe", True)
                         result = await self._camera.listen_audio(duration, transcribe)
