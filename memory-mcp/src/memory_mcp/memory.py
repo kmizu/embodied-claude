@@ -13,6 +13,7 @@ from .config import MemoryConfig
 from .types import (
     CameraPosition,
     Memory,
+    MemoryLink,
     MemorySearchResult,
     MemoryStats,
     ScoredMemory,
@@ -154,6 +155,17 @@ def _parse_tags(tags_str: str) -> tuple[str, ...]:
     return tuple(tag.strip() for tag in tags_str.split(",") if tag.strip())
 
 
+def _parse_links(links_json: str) -> tuple[MemoryLink, ...]:
+    """JSON文字列からMemoryLinkタプルに変換。"""
+    if not links_json:
+        return ()
+    try:
+        data_list = json.loads(links_json)
+        return tuple(MemoryLink.from_dict(d) for d in data_list)
+    except (json.JSONDecodeError, KeyError, TypeError):
+        return ()
+
+
 def _memory_from_metadata(
     memory_id: str,
     content: str,
@@ -179,6 +191,8 @@ def _memory_from_metadata(
         sensory_data=_parse_sensory_data(metadata.get("sensory_data", "")),
         camera_position=_parse_camera_position(metadata.get("camera_position", "")),
         tags=_parse_tags(metadata.get("tags", "")),
+        # Phase 5: 因果リンク
+        links=_parse_links(metadata.get("links", "")),
     )
 
 
@@ -976,3 +990,120 @@ class MemoryStore:
                 memories.append(memory)
 
         return memories
+
+    # Phase 5: 因果リンク
+
+    async def add_causal_link(
+        self,
+        source_id: str,
+        target_id: str,
+        link_type: str = "caused_by",
+        note: str | None = None,
+    ) -> None:
+        """因果リンクを追加（単方向）.
+
+        Args:
+            source_id: リンク元の記憶ID
+            target_id: リンク先の記憶ID
+            link_type: リンクタイプ ("caused_by", "leads_to", "related", "similar")
+            note: リンクの説明（任意）
+        """
+        collection = self._ensure_connected()
+
+        # ソース記憶を取得
+        source_memory = await self.get_by_id(source_id)
+        if source_memory is None:
+            raise ValueError(f"Source memory not found: {source_id}")
+
+        # ターゲット記憶が存在するか確認
+        target_memory = await self.get_by_id(target_id)
+        if target_memory is None:
+            raise ValueError(f"Target memory not found: {target_id}")
+
+        # 新しいリンクを作成
+        new_link = MemoryLink(
+            target_id=target_id,
+            link_type=link_type,
+            created_at=datetime.now().isoformat(),
+            note=note,
+        )
+
+        # 既存のリンクに追加（重複チェック）
+        existing_links = list(source_memory.links)
+        for link in existing_links:
+            if link.target_id == target_id and link.link_type == link_type:
+                return  # 既に同じリンクが存在
+
+        updated_links = tuple(existing_links + [new_link])
+
+        # メタデータを更新
+        results = await asyncio.to_thread(
+            collection.get,
+            ids=[source_id],
+        )
+
+        if results and results.get("metadatas"):
+            metadata = results["metadatas"][0]
+            metadata["links"] = json.dumps([link.to_dict() for link in updated_links])
+
+            await asyncio.to_thread(
+                collection.update,
+                ids=[source_id],
+                metadatas=[metadata],
+            )
+
+    async def get_causal_chain(
+        self,
+        memory_id: str,
+        direction: str = "backward",
+        max_depth: int = 5,
+    ) -> list[tuple[Memory, str]]:
+        """因果の連鎖を辿る.
+
+        Args:
+            memory_id: 起点の記憶ID
+            direction: "backward" (原因を辿る) or "forward" (結果を辿る)
+            max_depth: 最大深度（1-5）
+
+        Returns:
+            [(Memory, link_type), ...] の形式
+        """
+        max_depth = max(1, min(5, max_depth))
+
+        # 方向によって辿るリンクタイプを決定
+        if direction == "backward":
+            target_link_types = {"caused_by"}
+        elif direction == "forward":
+            target_link_types = {"leads_to"}
+        else:
+            raise ValueError(f"Invalid direction: {direction}")
+
+        visited: set[str] = set()
+        result: list[tuple[Memory, str]] = []
+        current_ids = [memory_id]
+
+        for _ in range(max_depth):
+            next_ids: list[str] = []
+
+            for mem_id in current_ids:
+                if mem_id in visited:
+                    continue
+                visited.add(mem_id)
+
+                memory = await self.get_by_id(mem_id)
+                if memory is None:
+                    continue
+
+                # 該当するリンクタイプのリンクを探す
+                for link in memory.links:
+                    if link.link_type in target_link_types:
+                        target_memory = await self.get_by_id(link.target_id)
+                        if target_memory and link.target_id not in visited:
+                            result.append((target_memory, link.link_type))
+                            next_ids.append(link.target_id)
+
+            current_ids = next_ids
+            if not current_ids:
+                break
+
+        return result

@@ -31,6 +31,47 @@ class Category(str, Enum):
     CONVERSATION = "conversation"
 
 
+# Phase 5: 因果リンク
+
+
+class LinkType(str, Enum):
+    """リンクタイプ."""
+
+    SIMILAR = "similar"  # 類似（従来の自動リンク）
+    CAUSED_BY = "caused_by"  # この記憶の原因
+    LEADS_TO = "leads_to"  # この記憶から派生
+    RELATED = "related"  # 一般的な関連
+
+
+@dataclass(frozen=True)
+class MemoryLink:
+    """記憶間のリンク."""
+
+    target_id: str
+    link_type: str  # LinkType.value
+    created_at: str  # ISO 8601
+    note: str | None = None  # リンクの説明（任意）
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "target_id": self.target_id,
+            "link_type": self.link_type,
+            "created_at": self.created_at,
+            "note": self.note,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "MemoryLink":
+        """Create from dictionary."""
+        return cls(
+            target_id=data["target_id"],
+            link_type=data["link_type"],
+            created_at=data["created_at"],
+            note=data.get("note"),
+        )
+
+
 # Phase 4: エピソード記憶・感覚データ統合
 
 
@@ -166,6 +207,8 @@ class Memory:
     sensory_data: tuple[SensoryData, ...] = ()  # 感覚データ
     camera_position: CameraPosition | None = None  # カメラ位置
     tags: tuple[str, ...] = ()  # 自由形式タグ
+    # Phase 5: 因果リンク
+    links: tuple[MemoryLink, ...] = ()  # 構造化リンク
 
     def to_metadata(self) -> dict[str, Any]:
         """Convert to dictionary for ChromaDB metadata."""
@@ -186,6 +229,8 @@ class Memory:
                 else ""
             ),
             "tags": ",".join(self.tags),
+            # Phase 5: 因果リンク
+            "links": json.dumps([link.to_dict() for link in self.links]),
         }
         return metadata
 

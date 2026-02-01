@@ -427,6 +427,62 @@ class MemoryMCPServer:
                         "required": [],
                     },
                 ),
+                # Phase 5: Causal Links
+                Tool(
+                    name="link_memories",
+                    description="Create a causal or relational link between two memories. Use this to record 'A caused B' or 'A leads to B' relationships.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "source_id": {
+                                "type": "string",
+                                "description": "ID of the source memory",
+                            },
+                            "target_id": {
+                                "type": "string",
+                                "description": "ID of the target memory",
+                            },
+                            "link_type": {
+                                "type": "string",
+                                "description": "Type of link",
+                                "default": "caused_by",
+                                "enum": ["similar", "caused_by", "leads_to", "related"],
+                            },
+                            "note": {
+                                "type": "string",
+                                "description": "Optional note explaining the link",
+                            },
+                        },
+                        "required": ["source_id", "target_id"],
+                    },
+                ),
+                Tool(
+                    name="get_causal_chain",
+                    description="Trace the causal chain of a memory. Find what caused this memory (backward) or what it led to (forward).",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "memory_id": {
+                                "type": "string",
+                                "description": "ID of the starting memory",
+                            },
+                            "direction": {
+                                "type": "string",
+                                "description": "Direction to trace: 'backward' (find causes) or 'forward' (find effects)",
+                                "default": "backward",
+                                "enum": ["backward", "forward"],
+                            },
+                            "max_depth": {
+                                "type": "integer",
+                                "description": "How deep to trace the chain (1-5)",
+                                "default": 3,
+                                "minimum": 1,
+                                "maximum": 5,
+                            },
+                        },
+                        "required": ["memory_id"],
+                    },
+                ),
             ]
 
         @self._server.call_tool()
@@ -880,6 +936,77 @@ Date Range:
                                 text=f"Working memory refreshed. Now contains {size} memories.",
                             )
                         ]
+
+                    # Phase 5: Causal Links
+                    case "link_memories":
+                        source_id = arguments.get("source_id", "")
+                        if not source_id:
+                            return [TextContent(type="text", text="Error: source_id is required")]
+
+                        target_id = arguments.get("target_id", "")
+                        if not target_id:
+                            return [TextContent(type="text", text="Error: target_id is required")]
+
+                        link_type = arguments.get("link_type", "caused_by")
+                        note = arguments.get("note")
+
+                        await self._memory_store.add_causal_link(
+                            source_id=source_id,
+                            target_id=target_id,
+                            link_type=link_type,
+                            note=note,
+                        )
+
+                        return [
+                            TextContent(
+                                type="text",
+                                text=f"Link created!\n"
+                                     f"Source: {source_id[:8]}...\n"
+                                     f"Target: {target_id[:8]}...\n"
+                                     f"Type: {link_type}\n"
+                                     f"Note: {note or '(none)'}",
+                            )
+                        ]
+
+                    case "get_causal_chain":
+                        memory_id = arguments.get("memory_id", "")
+                        if not memory_id:
+                            return [TextContent(type="text", text="Error: memory_id is required")]
+
+                        direction = arguments.get("direction", "backward")
+                        max_depth = arguments.get("max_depth", 3)
+
+                        # 起点の記憶を取得
+                        start_memory = await self._memory_store.get_by_id(memory_id)
+                        if not start_memory:
+                            return [TextContent(type="text", text="Error: Memory not found")]
+
+                        chain = await self._memory_store.get_causal_chain(
+                            memory_id=memory_id,
+                            direction=direction,
+                            max_depth=max_depth,
+                        )
+
+                        direction_label = "causes" if direction == "backward" else "effects"
+                        output_lines = [
+                            f"Causal chain ({direction_label}) starting from {memory_id[:8]}...:\n",
+                            f"=== Starting Memory ===\n",
+                            f"[{start_memory.timestamp}] [{start_memory.emotion}]\n",
+                            f"{start_memory.content}\n",
+                        ]
+
+                        if chain:
+                            output_lines.append(f"\n=== {direction_label.title()} ({len(chain)} memories) ===\n")
+                            for i, (mem, link_type) in enumerate(chain, 1):
+                                output_lines.append(
+                                    f"--- {i}. [{link_type}] {mem.id[:8]}... ---\n"
+                                    f"[{mem.timestamp}] [{mem.emotion}]\n"
+                                    f"{mem.content}\n"
+                                )
+                        else:
+                            output_lines.append(f"\nNo {direction_label} found.\n")
+
+                        return [TextContent(type="text", text="\n".join(output_lines))]
 
                     case _:
                         return [TextContent(type="text", text=f"Unknown tool: {name}")]
